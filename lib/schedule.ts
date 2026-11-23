@@ -11,7 +11,11 @@ export interface HabitRule {
 export interface HabitLog {
   value: number;
   done: number;
+  skipped?: number;
 }
+
+/** Estado de um item no dia. */
+export type ItemStatus = "pending" | "done" | "skipped";
 
 export interface TaskRule {
   recurrence: "none" | "daily" | "weekdays" | "weekly" | "monthly";
@@ -53,7 +57,7 @@ export function habitDueOn(habit: Pick<HabitRule, "days" | "start_date">, date: 
 }
 
 export function habitDone(habit: Pick<HabitRule, "type" | "target">, log: HabitLog | null | undefined): boolean {
-  if (!log) return false;
+  if (!log || log.skipped === 1) return false;
   if (habit.type === "check") return log.done === 1;
   return habit.target != null && habit.target > 0 ? log.value >= habit.target : log.done === 1;
 }
@@ -90,9 +94,14 @@ export interface Streak {
 
 /**
  * Sequência de dias devidos consecutivos concluídos. A atual conta para trás a partir de hoje
- * (se hoje ainda não foi feito, começa de ontem sem quebrar). Dias não devidos são ignorados.
+ * (se hoje ainda está pendente, começa de ontem sem quebrar; "não fiz" hoje quebra). Dias não devidos são ignorados.
  */
-export function calcStreak(habit: Pick<HabitRule, "days" | "start_date">, doneDates: ReadonlySet<string>, today: string): Streak {
+export function calcStreak(
+  habit: Pick<HabitRule, "days" | "start_date">,
+  doneDates: ReadonlySet<string>,
+  today: string,
+  skippedToday = false,
+): Streak {
   const maxBack = 800;
   const first = diffDays(today, habit.start_date) > maxBack ? addDays(today, -maxBack) : habit.start_date;
   let best = 0;
@@ -102,7 +111,7 @@ export function calcStreak(habit: Pick<HabitRule, "days" | "start_date">, doneDa
     if (doneDates.has(d)) {
       run++;
       if (run > best) best = run;
-    } else if (d === today) {
+    } else if (d === today && !skippedToday) {
       // hoje ainda pode ser feito: não quebra a sequência, mas também não soma
     } else {
       run = 0;

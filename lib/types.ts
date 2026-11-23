@@ -50,12 +50,14 @@ export interface Task {
 export interface HabitView extends Habit {
   value: number;
   done: boolean;
+  skipped: boolean;
   streak: number;
   best: number;
 }
 
 export interface TaskView extends Task {
   done: boolean;
+  skipped: boolean;
   overdue: boolean;
 }
 

@@ -1,5 +1,5 @@
 "use client";
-import { Check, Loader2 } from "lucide-react";
+import { Check, Loader2, X } from "lucide-react";
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 import { cx } from "@/lib/cx";
 import { CategoryIcon } from "./icons";
@@ -184,7 +184,11 @@ export function CategoryBadge({ category, size = 40 }: { category: Pick<Category
   );
 }
 
-export function CheckCircle({ done, onClick, label, size = 44 }: { done: boolean; onClick: () => void; label: string; size?: number }) {
+export function CheckCircle({
+  done, skipped = false, onClick, label, size = 44,
+}: { done: boolean; skipped?: boolean; onClick: () => void; label: string; size?: number }) {
+  const inner = size - 14;
+  const Icon = skipped && !done ? X : Check;
   return (
     <button
       type="button"
@@ -197,11 +201,15 @@ export function CheckCircle({ done, onClick, label, size = 44 }: { done: boolean
       <span
         className={cx(
           "flex items-center justify-center rounded-full border-2 transition-all duration-200",
-          done ? "border-accent bg-accent text-bg" : "border-muted/50 text-transparent hover:border-accent",
+          done
+            ? "border-accent bg-accent text-bg"
+            : skipped
+              ? "border-surface-2 bg-surface-2 text-muted"
+              : "border-muted/50 text-transparent hover:border-accent",
         )}
-        style={{ width: size - 14, height: size - 14 }}
+        style={{ width: inner, height: inner }}
       >
-        <Check size={Math.round((size - 14) * 0.6)} strokeWidth={3} aria-hidden />
+        <Icon size={Math.round(inner * 0.6)} strokeWidth={3} aria-hidden />
       </span>
     </button>
   );

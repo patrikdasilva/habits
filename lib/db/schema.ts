@@ -32,6 +32,7 @@ export const SCHEMA: string[] = [
     date TEXT NOT NULL,
     value REAL NOT NULL DEFAULT 0,
     done INTEGER NOT NULL DEFAULT 0,
+    skipped INTEGER NOT NULL DEFAULT 0,
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
     PRIMARY KEY (habit_id, date)
   )`,
@@ -56,6 +57,7 @@ export const SCHEMA: string[] = [
   `CREATE TABLE IF NOT EXISTS task_completions (
     task_id INTEGER NOT NULL REFERENCES tasks(id),
     date TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'done',
     done_at TEXT NOT NULL DEFAULT (datetime('now')),
     PRIMARY KEY (task_id, date)
   )`,
@@ -71,4 +73,10 @@ export const SCHEMA: string[] = [
   )`,
   `CREATE INDEX IF NOT EXISTS idx_habit_logs_date ON habit_logs(date)`,
   `CREATE INDEX IF NOT EXISTS idx_task_completions_date ON task_completions(date)`,
+];
+
+/** Colunas adicionadas depois da primeira versão (bancos já existentes). */
+export const MIGRATIONS: string[] = [
+  "ALTER TABLE habit_logs ADD COLUMN skipped INTEGER NOT NULL DEFAULT 0",
+  "ALTER TABLE task_completions ADD COLUMN status TEXT NOT NULL DEFAULT 'done'",
 ];

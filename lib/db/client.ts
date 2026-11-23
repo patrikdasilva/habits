@@ -1,7 +1,7 @@
 import "server-only";
 import { mkdirSync } from "node:fs";
 import { createClient, type Client, type ResultSet } from "@libsql/client";
-import { SCHEMA } from "./schema";
+import { MIGRATIONS, SCHEMA } from "./schema";
 import { seedCategories } from "./seed";
 
 // Turso em produção (TURSO_DATABASE_URL / TURSO_AUTH_TOKEN); arquivo local em desenvolvimento.
@@ -18,6 +18,13 @@ async function init(): Promise<Client> {
   if (url.startsWith("file:")) mkdirSync("data", { recursive: true });
   const db = createClient({ url, authToken: process.env.TURSO_AUTH_TOKEN || undefined });
   for (const sql of SCHEMA) await db.execute(sql);
+  for (const sql of MIGRATIONS) {
+    try {
+      await db.execute(sql);
+    } catch (e) {
+      if (!/duplicate column/i.test(String((e as Error).message))) throw e;
+    }
+  }
   await seedCategories(db);
   return db;
 }

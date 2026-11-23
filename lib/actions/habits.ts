@@ -1,10 +1,10 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { today } from "@/lib/date";
+import { isDate, today } from "@/lib/date";
 import * as repo from "@/lib/repo/habits";
 import { isAuthenticated } from "@/lib/server/auth";
 import { clearReminders, syncReminders } from "@/lib/server/reminders";
-import { habitDone } from "@/lib/schedule";
+import { habitDone, type ItemStatus } from "@/lib/schedule";
 import type { HabitInput } from "@/lib/types";
 import { normalizeHabit } from "@/lib/validate";
 import { fail, type ActionResult } from "./result";
@@ -39,6 +39,31 @@ export async function setHabitDone(habitId: number, date: string, done: boolean)
     if (!h) throw new Error("Hábito não encontrado.");
     if (done) await repo.upsertLog(habitId, date, 0, true);
     else await repo.deleteLog(habitId, date);
+    refresh();
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/**
+ * Estado do dia: feito (check: marca; quantidade: completa a meta), não fiz, ou pendente.
+ * "Não fiz" mantém o valor já registrado (quantidade), mas não conta como concluído.
+ */
+export async function setHabitStatus(habitId: number, date: string, status: ItemStatus): Promise<ActionResult> {
+  try {
+    await guard();
+    if (!isDate(date)) throw new Error("Data inválida.");
+    const h = await repo.getHabit(habitId);
+    if (!h) throw new Error("Hábito não encontrado.");
+    const current = (await repo.logsForDate(date)).find((l) => l.habit_id === habitId);
+    const value = current?.value ?? 0;
+    if (status === "done") {
+      const v = h.type === "quantity" && h.target ? Math.max(value, h.target) : value;
+      await repo.upsertLog(habitId, date, v, true);
+    } else if (status === "skipped") await repo.upsertLog(habitId, date, value, false, true);
+    else if (h.type === "quantity" && value > 0 && !habitDone(h, { value, done: 0 })) await repo.upsertLog(habitId, date, value, false);
+    else await repo.deleteLog(habitId, date); // pendente; quantidade já na meta volta para zero
     refresh();
     return { ok: true };
   } catch (e) {

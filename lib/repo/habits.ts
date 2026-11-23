@@ -15,20 +15,21 @@ export interface LogRow {
   date: string;
   value: number;
   done: number;
+  skipped: number;
 }
 
 export const logsForDate = (date: string) =>
-  query<LogRow>("SELECT habit_id, date, value, done FROM habit_logs WHERE date = ?", [date]);
+  query<LogRow>("SELECT habit_id, date, value, done, skipped FROM habit_logs WHERE date = ?", [date]);
 
 export const logsForHabit = (habitId: number, from: string, to: string) =>
-  query<LogRow>("SELECT habit_id, date, value, done FROM habit_logs WHERE habit_id = ? AND date >= ? AND date <= ? ORDER BY date", [
+  query<LogRow>("SELECT habit_id, date, value, done, skipped FROM habit_logs WHERE habit_id = ? AND date >= ? AND date <= ? ORDER BY date", [
     habitId,
     from,
     to,
   ]);
 
 export const logsInRange = (from: string, to: string) =>
-  query<LogRow>("SELECT habit_id, date, value, done FROM habit_logs WHERE date >= ? AND date <= ?", [from, to]);
+  query<LogRow>("SELECT habit_id, date, value, done, skipped FROM habit_logs WHERE date >= ? AND date <= ?", [from, to]);
 
 /** Datas concluídas por hábito (para streaks). */
 export async function doneDatesByHabit(): Promise<Map<number, Set<string>>> {
@@ -49,8 +50,9 @@ export async function habitViewsForDate(date: string, today: string): Promise<Ha
     .filter((h) => habitDueOn(h, date))
     .map((h) => {
       const log = byId.get(h.id);
-      const s = calcStreak(h, doneMap.get(h.id) ?? new Set(), today);
-      return { ...h, value: log?.value ?? 0, done: habitDone(h, log), streak: s.current, best: s.best };
+      const skipped = log?.skipped === 1;
+      const s = calcStreak(h, doneMap.get(h.id) ?? new Set(), today, date === today && skipped);
+      return { ...h, value: log?.value ?? 0, done: habitDone(h, log), skipped, streak: s.current, best: s.best };
     })
     .sort((a, b) => timeSortKey(a.time) - timeSortKey(b.time) || a.sort - b.sort || a.id - b.id);
 }
@@ -87,11 +89,12 @@ export async function deleteHabit(id: number) {
   );
 }
 
-export async function upsertLog(habitId: number, date: string, value: number, done: boolean) {
+export async function upsertLog(habitId: number, date: string, value: number, done: boolean, skipped = false) {
   await run(
-    `INSERT INTO habit_logs (habit_id, date, value, done, updated_at) VALUES (?, ?, ?, ?, datetime('now'))
-     ON CONFLICT(habit_id, date) DO UPDATE SET value = excluded.value, done = excluded.done, updated_at = excluded.updated_at`,
-    [habitId, date, value, done ? 1 : 0],
+    `INSERT INTO habit_logs (habit_id, date, value, done, skipped, updated_at) VALUES (?, ?, ?, ?, ?, datetime('now'))
+     ON CONFLICT(habit_id, date) DO UPDATE SET value = excluded.value, done = excluded.done, skipped = excluded.skipped,
+       updated_at = excluded.updated_at`,
+    [habitId, date, value, done ? 1 : 0, skipped ? 1 : 0],
   );
 }
 

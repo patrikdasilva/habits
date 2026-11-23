@@ -2,7 +2,8 @@
 import { CalendarClock, CheckCheck, Inbox, ListChecks, Plus, Repeat } from "lucide-react";
 import Link from "next/link";
 import { startTransition, useMemo, useOptimistic, type ReactNode } from "react";
-import { setTaskDone } from "@/lib/actions/tasks";
+import { setTaskStatus } from "@/lib/actions/tasks";
+import type { ItemStatus } from "@/lib/schedule";
 import { formatLong, formatRelative } from "@/lib/date";
 import { recurrenceLabel } from "@/lib/format";
 import type { Category, TaskView } from "@/lib/types";
@@ -32,20 +33,24 @@ export function TasksView({
   const { toast } = useUI();
   const catMap = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
   // overrides otimistas por "id|data"
-  const [over, setOver] = useOptimistic<Record<string, boolean>, { key: string; done: boolean }>({}, (s, p) => ({ ...s, [p.key]: p.done }));
-  const doneOf = (t: TaskView, date: string) => over[`${t.id}|${date}`] ?? t.done;
+  const [over, setOver] = useOptimistic<Record<string, ItemStatus>, { key: string; status: ItemStatus }>({}, (s, p) => ({ ...s, [p.key]: p.status }));
+  const statusOf = (t: TaskView, date: string): ItemStatus => over[`${t.id}|${date}`] ?? (t.done ? "done" : t.skipped ? "skipped" : "pending");
+  const withStatus = (t: TaskView, date: string): TaskView => {
+    const st = statusOf(t, date);
+    return { ...t, done: st === "done", skipped: st === "skipped" };
+  };
+  const doneOf = (t: TaskView, date: string) => statusOf(t, date) !== "pending";
 
-  function toggle(t: TaskView, date: string) {
-    const done = !doneOf(t, date);
+  function change(t: TaskView, date: string, status: ItemStatus) {
     startTransition(async () => {
-      setOver({ key: `${t.id}|${date}`, done });
-      const r = await setTaskDone(t.id, date, done);
+      setOver({ key: `${t.id}|${date}`, status });
+      const r = await setTaskStatus(t.id, date, status);
       if (!r.ok) toast(r.error, "error");
     });
   }
 
   const item = (t: TaskView, date: string, opts?: { showDate?: boolean }) => (
-    <TaskItem key={`${t.id}-${date}`} task={{ ...t, done: doneOf(t, date) }} category={catMap.get(t.category_id ?? -1)} onToggle={() => toggle(t, date)} today={today} showDate={opts?.showDate} />
+    <TaskItem key={`${t.id}-${date}`} task={withStatus(t, date)} category={catMap.get(t.category_id ?? -1)} onStatus={(x, st) => change(x, date, st)} today={today} showDate={opts?.showDate} />
   );
 
   const tabs: { id: TaskTab; label: string; count?: number }[] = [
@@ -113,9 +118,9 @@ export function TasksView({
         {completed.map((t) => (
           <TaskItem
             key={`${t.id}-${t.completedOn}`}
-            task={{ ...t, done: doneOf(t, t.completedOn) }}
+            task={withStatus(t, t.completedOn)}
             category={catMap.get(t.category_id ?? -1)}
-            onToggle={() => toggle(t, t.completedOn)}
+            onStatus={(x, st) => change(x, t.completedOn, st)}
             today={today}
             subtitle={`Concluída · ${formatRelative(t.completedOn, today)}`}
           />

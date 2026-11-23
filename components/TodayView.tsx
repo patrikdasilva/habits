@@ -2,10 +2,10 @@
 import { CalendarCheck, CircleAlert, ListChecks, Repeat, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { startTransition, useMemo, useOptimistic, useState } from "react";
-import { setHabitDone, setHabitValue } from "@/lib/actions/habits";
-import { setTaskDone } from "@/lib/actions/tasks";
+import { setHabitStatus, setHabitValue } from "@/lib/actions/habits";
+import { setTaskStatus } from "@/lib/actions/tasks";
 import { formatLong, formatRelative } from "@/lib/date";
-import { PERIOD_LABEL, PERIOD_ORDER, periodOf, type Period } from "@/lib/schedule";
+import { PERIOD_LABEL, PERIOD_ORDER, periodOf, type ItemStatus, type Period } from "@/lib/schedule";
 import type { Category, HabitView, TaskView } from "@/lib/types";
 import { useCreate } from "./Create";
 import { DayStrip } from "./DayStrip";
@@ -15,8 +15,8 @@ import { useUI } from "./Providers";
 import { TaskItem } from "./TaskItem";
 import { Button, Chip, EmptyState, SectionTitle } from "./ui";
 
-type HabitPatch = { id: number; value?: number; done: boolean };
-type TaskPatch = { id: number; done: boolean };
+type HabitPatch = { id: number; value?: number; done: boolean; skipped?: boolean };
+type TaskPatch = { id: number; status: ItemStatus };
 
 export function TodayView({
   date, today, habits, overdue, tasks, categories,
@@ -30,17 +30,20 @@ export function TodayView({
     state.map((h) => {
       if (h.id !== p.id) return h;
       const streak = date === today && p.done !== h.done ? Math.max(0, h.streak + (p.done ? 1 : -1)) : h.streak;
-      return { ...h, value: p.value ?? h.value, done: p.done, streak };
+      return { ...h, value: p.value ?? h.value, done: p.done, skipped: p.skipped ?? false, streak };
     }),
   );
-  const [oTasks, patchTask] = useOptimistic([...overdue, ...tasks], (state, p: TaskPatch) => state.map((t) => (t.id === p.id ? { ...t, done: p.done } : t)));
+  const [oTasks, patchTask] = useOptimistic([...overdue, ...tasks], (state, p: TaskPatch) => state.map((t) => (t.id === p.id ? { ...t, done: p.status === "done", skipped: p.status === "skipped" } : t)));
 
   const fail = (msg: string) => toast(msg, "error");
 
-  function onCheck(h: HabitView) {
+  function onHabitStatus(h: HabitView, st: ItemStatus) {
+    const target = h.type === "quantity" && h.target ? h.target : 0;
+    const value =
+      st === "done" ? Math.max(h.value, target) : st === "pending" && h.type === "quantity" && h.done ? 0 : h.value;
     startTransition(async () => {
-      patchHabit({ id: h.id, done: !h.done });
-      const r = await setHabitDone(h.id, date, !h.done);
+      patchHabit({ id: h.id, value, done: st === "done", skipped: st === "skipped" });
+      const r = await setHabitStatus(h.id, date, st);
       if (!r.ok) fail(r.error);
     });
   }
@@ -52,20 +55,21 @@ export function TodayView({
       if (!r.ok) fail(r.error);
     });
   }
-  function onToggleTask(t: TaskView) {
+  function onTaskStatus(t: TaskView, st: ItemStatus) {
     startTransition(async () => {
-      patchTask({ id: t.id, done: !t.done });
-      const r = await setTaskDone(t.id, date, !t.done);
+      patchTask({ id: t.id, status: st });
+      const r = await setTaskStatus(t.id, date, st);
       if (!r.ok) fail(r.error);
     });
   }
+
 
   const overdueIds = new Set(overdue.map((t) => t.id));
   const visibleH = oHabits.filter((h) => filter === null || h.category_id === filter);
   const visibleOverdue = oTasks.filter((t) => overdueIds.has(t.id) && (filter === null || t.category_id === filter));
   const visibleT = oTasks
     .filter((t) => !overdueIds.has(t.id) && (filter === null || t.category_id === filter))
-    .sort((a, b) => Number(a.done) - Number(b.done));
+    .sort((a, b) => Number(a.done || a.skipped) - Number(b.done || b.skipped));
 
   const totalAll = oHabits.length + oTasks.filter((t) => !overdueIds.has(t.id)).length;
   const doneAll = oHabits.filter((h) => h.done).length + oTasks.filter((t) => !overdueIds.has(t.id) && t.done).length;
@@ -126,7 +130,7 @@ export function TodayView({
               <SectionTitle right={<span className="inline-flex items-center gap-1 text-xs font-medium text-accent"><CircleAlert size={13} /> {visibleOverdue.length}</span>}>Atrasadas</SectionTitle>
               <div className="flex flex-col gap-2">
                 {visibleOverdue.map((t) => (
-                  <TaskItem key={t.id} task={t} category={catMap.get(t.category_id ?? -1)} onToggle={onToggleTask} today={today} />
+                  <TaskItem key={t.id} task={t} category={catMap.get(t.category_id ?? -1)} onStatus={onTaskStatus} today={today} />
                 ))}
               </div>
             </section>
@@ -143,7 +147,7 @@ export function TodayView({
                     <PeriodLabel period={p} />
                     <div className="flex flex-col gap-2.5">
                       {items.map((h) => (
-                        <HabitCard key={h.id} habit={h} category={catMap.get(h.category_id ?? -1)} onCheck={onCheck} onSetValue={onSetValue} />
+                        <HabitCard key={h.id} habit={h} category={catMap.get(h.category_id ?? -1)} onStatus={onHabitStatus} onSetValue={onSetValue} />
                       ))}
                     </div>
                   </div>
@@ -159,7 +163,7 @@ export function TodayView({
             ) : (
               <div className="flex flex-col gap-2">
                 {visibleT.map((t) => (
-                  <TaskItem key={t.id} task={t} category={catMap.get(t.category_id ?? -1)} onToggle={onToggleTask} today={today} />
+                  <TaskItem key={t.id} task={t} category={catMap.get(t.category_id ?? -1)} onStatus={onTaskStatus} today={today} />
                 ))}
               </div>
             )}

@@ -4,6 +4,7 @@ import { isDate, today } from "@/lib/date";
 import * as repo from "@/lib/repo/tasks";
 import { isAuthenticated } from "@/lib/server/auth";
 import { clearReminders, syncReminders } from "@/lib/server/reminders";
+import type { ItemStatus } from "@/lib/schedule";
 import type { TaskInput } from "@/lib/types";
 import { normalizeTask } from "@/lib/validate";
 import { fail, type ActionResult } from "./result";
@@ -31,12 +32,17 @@ export async function saveTask(raw: TaskInput): Promise<ActionResult<{ id: numbe
 }
 
 export async function setTaskDone(taskId: number, date: string, done: boolean): Promise<ActionResult> {
+  return setTaskStatus(taskId, date, done ? "done" : "pending");
+}
+
+export async function setTaskStatus(taskId: number, date: string, status: ItemStatus): Promise<ActionResult> {
   try {
     await guard();
     if (!isDate(date)) throw new Error("Data inválida.");
     const t = await repo.getTask(taskId);
     if (!t) throw new Error("Tarefa não encontrada.");
-    await repo.setCompletion(t, date, done);
+    if (!["pending", "done", "skipped"].includes(status)) throw new Error("Estado inválido.");
+    await repo.setCompletion(t, date, status);
     refresh();
     return { ok: true };
   } catch (e) {

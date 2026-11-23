@@ -1,16 +1,24 @@
 "use client";
-import { Flame, Minus, Pencil, Plus } from "lucide-react";
+import { Flame, Minus, Pencil, Plus, X } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { fmtNum, targetLabel } from "@/lib/format";
+import type { ItemStatus } from "@/lib/schedule";
 import type { Category, HabitView } from "@/lib/types";
 import { Sheet } from "./Sheet";
+import { SwipeAction } from "./SwipeAction";
 import { Button, CategoryBadge, CheckCircle, Input, ProgressBar } from "./ui";
 import { cx } from "@/lib/cx";
 
 export function HabitCard({
-  habit: h, category, onCheck, onSetValue,
-}: { habit: HabitView; category?: Category; onCheck: (h: HabitView) => void; onSetValue: (h: HabitView, value: number) => void }) {
+  habit: h, category, onStatus, onSetValue,
+}: {
+  habit: HabitView;
+  category?: Category;
+  onStatus: (h: HabitView, s: ItemStatus) => void;
+  onSetValue: (h: HabitView, value: number) => void;
+}) {
+  const status: ItemStatus = h.done ? "done" : h.skipped ? "skipped" : "pending";
   const [entry, setEntry] = useState<string | null>(null);
   const press = useRef<ReturnType<typeof setTimeout> | null>(null);
   const step = h.step && h.step > 0 ? h.step : 1;
@@ -26,12 +34,17 @@ export function HabitCard({
   };
 
   return (
-    <div className={cx("rounded-2xl bg-surface p-3.5 ring-1 transition-colors", h.done ? "ring-accent/50" : "ring-surface-2/60")}>
+    <SwipeAction status={status} onChange={(s) => onStatus(h, s)}>
+    <div className={cx("rounded-2xl bg-surface p-3.5 ring-1 ring-inset transition-colors", h.done ? "ring-accent/50" : "ring-surface-2/60")}>
+      <div className={cx("transition-opacity", h.skipped && "opacity-55")}>
       <div className="flex items-center gap-3">
         <CategoryBadge category={category} />
         <div className="min-w-0 flex-1">
-          <Link href={`/habitos/${h.id}`} className="block truncate font-semibold leading-snug hover:underline">{h.name}</Link>
+          <Link href={`/habitos/${h.id}`} className={cx("block truncate font-semibold leading-snug hover:underline", h.skipped && "line-through decoration-muted/60")}>{h.name}</Link>
           <p className="flex min-w-0 flex-wrap items-center gap-x-2.5 text-[13px] text-muted">
+            {h.skipped && (
+              <span className="inline-flex items-center gap-0.5 font-medium"><X size={12} strokeWidth={3} aria-hidden /> Não fiz</span>
+            )}
             {h.time && <span className="tabular-nums">{h.time}</span>}
             {h.type === "quantity" && <span>meta {targetLabel(h)}</span>}
             {h.streak > 0 && (
@@ -41,7 +54,13 @@ export function HabitCard({
             )}
           </p>
         </div>
-        {h.type === "check" && <CheckCircle done={h.done} onClick={() => onCheck(h)} label={h.done ? `Desmarcar ${h.name}` : `Marcar ${h.name}`} size={48} />}
+        <CheckCircle
+          done={h.done}
+          skipped={h.skipped}
+          onClick={() => onStatus(h, status === "pending" ? "done" : "pending")}
+          label={status === "pending" ? `Concluir ${h.name}` : `Voltar ${h.name} para pendente`}
+          size={48}
+        />
       </div>
       {h.type === "quantity" && (
         <div className="mt-3">
@@ -84,6 +103,7 @@ export function HabitCard({
           <ProgressBar value={pct} />
         </div>
       )}
+      </div>
       <Sheet open={entry !== null} onClose={() => setEntry(null)} title={h.name} size="sm">
         <form
           className="space-y-4 pb-1"
@@ -102,5 +122,6 @@ export function HabitCard({
         </form>
       </Sheet>
     </div>
+    </SwipeAction>
   );
 }

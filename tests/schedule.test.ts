@@ -146,3 +146,17 @@ describe("completionRate e daysLabel", () => {
     expect(daysLabel("13")).toBe("Seg, qua");
   });
 });
+
+describe("não fiz", () => {
+  const daily = { days: "0123456", start_date: "2025-03-01" };
+  it("hábito marcado como não fiz não conta como concluído", () => {
+    expect(habitDone({ type: "check", target: null }, { value: 0, done: 1, skipped: 1 })).toBe(false);
+    expect(habitDone({ type: "quantity", target: 10 }, { value: 12, done: 0, skipped: 1 })).toBe(false);
+  });
+  it("não fiz hoje quebra a sequência; pendente hoje não", () => {
+    const done = new Set(["2025-03-08", "2025-03-09"]);
+    expect(calcStreak(daily, done, "2025-03-10").current).toBe(2);
+    expect(calcStreak(daily, done, "2025-03-10", true).current).toBe(0);
+    expect(calcStreak(daily, done, "2025-03-10", true).best).toBe(2);
+  });
+});
