@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #171721;
+  --color-surface: #1e1e2a;
+  --color-surface-2: #2c2c3a;
+  --color-text: #ededf3;
+  --color-muted: #c3c3cc;
+  --color-accent: #afb2ce;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --animate-sheet-up: sheet-up 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-pop-in: pop-in 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-fade-in: fade-in 0.2s ease-out;
+  --animate-toast-in: toast-in 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+
+  @keyframes sheet-up {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  @keyframes pop-in {
+    from { opacity: 0; transform: translateY(12px) scale(0.97); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes toast-in {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: none; }
+  }
+}
+
+html {
+  background: var(--color-bg);
+  color-scheme: dark;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
+}
+
+* { scrollbar-width: thin; scrollbar-color: var(--color-surface-2) transparent; }
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+input, textarea, select, button { font: inherit; }
+input[type="date"], input[type="time"] { min-width: 0; -webkit-appearance: none; appearance: none; }
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(0.8); }
+
+.hide-scroll { scrollbar-width: none; }
+.hide-scroll::-webkit-scrollbar { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
