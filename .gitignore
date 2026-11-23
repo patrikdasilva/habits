@@ -1,0 +1,15 @@
+node_modules
+.next
+out
+next-env.d.ts
+*.tsbuildinfo
+.vercel
+
+# banco local e segredos
+/data
+.env*
+!.env.example
+
+# testes
+/test-results
+/coverage
