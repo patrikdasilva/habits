@@ -1,8 +1,12 @@
 import { LoginForm } from "./LoginForm";
+import { ConfigProblems } from "@/components/ConfigProblems";
+import { diagnose } from "@/lib/server/diagnostics";
 
 export const metadata = { title: "Entrar" };
+export const dynamic = "force-dynamic";
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const { problems } = await diagnose();
   return (
     <main className="flex min-h-dvh items-center justify-center px-5 py-10 pt-[max(2.5rem,env(safe-area-inset-top))]">
       <div className="w-full max-w-sm">
@@ -12,6 +16,7 @@ export default function LoginPage() {
           <h1 className="text-3xl font-bold tracking-tight">Hábitos</h1>
           <p className="mt-1.5 text-muted">Sua rotina, um dia de cada vez.</p>
         </div>
+        <ConfigProblems problems={problems} />
         <LoginForm />
       </div>
     </main>
