@@ -26,8 +26,10 @@ export function configProblems(): string[] {
   if (process.env.NODE_ENV === "production") {
     if (!process.env.APP_PASSWORD) p.push("APP_PASSWORD não definida.");
     if (!authSecret()) p.push("AUTH_SECRET ausente ou com menos de 32 caracteres (gere com: openssl rand -base64 32).");
-    if (dbUrl().startsWith("file:")) p.push("TURSO_DATABASE_URL não definida neste deploy.");
-    else if (!process.env.TURSO_AUTH_TOKEN) p.push("TURSO_AUTH_TOKEN não definida.");
+    const url = dbUrl();
+    // Na Vercel o disco é efêmero: precisa do Turso. Num servidor próprio, arquivo local é válido.
+    if (url.startsWith("file:") && process.env.VERCEL) p.push("TURSO_DATABASE_URL não definida neste deploy.");
+    else if (url.startsWith("libsql:") && !process.env.TURSO_AUTH_TOKEN) p.push("TURSO_AUTH_TOKEN não definida.");
   }
   return p;
 }

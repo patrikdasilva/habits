@@ -90,7 +90,7 @@ export function TodayView({
             <Link href="/" className="mt-1 inline-block text-sm font-medium text-accent hover:underline">Voltar para hoje</Link>
           )}
         </div>
-        <ProgressRing value={ratio} size={88} />
+        <ProgressRing value={ratio} size={72} />
       </header>
 
       <div className="mb-5"><DayStrip date={date} today={today} /></div>
