@@ -4,7 +4,8 @@ import { formatRelative } from "@/lib/date";
 import type { Category, TaskView } from "@/lib/types";
 import { PRIORITY_LABEL } from "@/lib/types";
 import { useCreate } from "./Create";
-import { CategoryBadge, CheckCircle, cx } from "./ui";
+import { CategoryBadge, CheckCircle } from "./ui";
+import { cx } from "@/lib/cx";
 
 export function TaskItem({
   task: t, category, onToggle, today, showDate, hideCheck, subtitle,

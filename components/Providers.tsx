@@ -1,7 +1,8 @@
 "use client";
 import { AlertCircle, CheckCircle2, Info } from "lucide-react";
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react";
-import { Button, cx } from "./ui";
+import { Button } from "./ui";
+import { cx } from "@/lib/cx";
 import { Sheet } from "./Sheet";
 
 type ToastKind = "info" | "error" | "success";
@@ -37,8 +38,8 @@ export function UIProvider({ children }: { children: ReactNode }) {
 
   const toast = useCallback((text: string, kind: ToastKind = "info") => {
     const id = ++seq.current;
-    setToasts((t) => [...t.slice(-2), { id, text, kind }]);
-    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), kind === "error" ? 5000 : 3000);
+    setToasts((t) => [...t.slice(-1), { id, text, kind }]);
+    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), kind === "error" ? 5000 : 2200);
   }, []);
 
   const confirm = useCallback((o: ConfirmOpts) => new Promise<boolean>((resolve) => setConfirmState({ ...o, resolve })), []);

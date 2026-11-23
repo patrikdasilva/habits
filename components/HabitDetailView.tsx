@@ -12,7 +12,8 @@ import { useCreate } from "./Create";
 import { HabitSummary } from "./HabitsList";
 import { Heatmap } from "./Heatmap";
 import { useUI } from "./Providers";
-import { Button, Card, CategoryBadge, CheckCircle, cx, EmptyState, Input, SectionTitle } from "./ui";
+import { Button, Card, CategoryBadge, CheckCircle, EmptyState, Input, SectionTitle } from "./ui";
+import { cx } from "@/lib/cx";
 
 function Stat({ icon, label, value, suffix }: { icon: React.ReactNode; label: string; value: string | number; suffix?: string }) {
   return (

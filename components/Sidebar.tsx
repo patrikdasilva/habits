@@ -3,7 +3,7 @@ import { Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCreate } from "./Create";
-import { cx } from "./ui";
+import { cx } from "@/lib/cx";
 import { NAV } from "./nav";
 
 export function Sidebar() {

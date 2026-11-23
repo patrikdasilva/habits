@@ -5,7 +5,8 @@ import { useRef, useState } from "react";
 import { fmtNum, targetLabel } from "@/lib/format";
 import type { Category, HabitView } from "@/lib/types";
 import { Sheet } from "./Sheet";
-import { Button, CategoryBadge, CheckCircle, cx, Input, ProgressBar } from "./ui";
+import { Button, CategoryBadge, CheckCircle, Input, ProgressBar } from "./ui";
+import { cx } from "@/lib/cx";
 
 export function HabitCard({
   habit: h, category, onCheck, onSetValue,

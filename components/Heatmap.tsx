@@ -1,5 +1,5 @@
 import { weekday } from "@/lib/date";
-import { cx } from "./ui";
+import { cx } from "@/lib/cx";
 
 export interface HeatCell {
   date: string;
@@ -11,11 +11,11 @@ const level = (r: number | null) => (r === null ? -1 : r <= 0 ? 0 : r < 0.34 ? 1
 const BG = ["bg-surface-2", "bg-accent/25", "bg-accent/50", "bg-accent/75", "bg-accent"];
 
 /** Grade de semanas (colunas) x dias da semana (linhas, domingo no topo). `cells` deve começar num domingo. */
-export function Heatmap({ cells, className }: { cells: HeatCell[]; className?: string }) {
+export function Heatmap({ cells, className, maxCell = 30 }: { cells: HeatCell[]; className?: string; maxCell?: number }) {
   const weeks = Math.ceil(cells.length / 7);
   return (
     <div className={className}>
-      <div className="grid gap-[3px]" style={{ gridTemplateColumns: `repeat(${weeks}, minmax(0, 1fr))`, gridTemplateRows: "repeat(7, auto)" }}>
+      <div className="grid gap-[3px]" style={{ gridTemplateColumns: `repeat(${weeks}, minmax(0, 1fr))`, gridTemplateRows: "repeat(7, auto)", maxWidth: weeks * (maxCell + 3) }}>
         {cells.map((c, i) => {
           const l = level(c.ratio);
           return (
@@ -28,7 +28,7 @@ export function Heatmap({ cells, className }: { cells: HeatCell[]; className?: s
           );
         })}
       </div>
-      <div className="mt-2.5 flex items-center justify-end gap-1.5 text-[11px] text-muted">
+      <div className="mt-2.5 flex items-center justify-start gap-1.5 text-[11px] text-muted">
         menos
         {BG.map((b) => <span key={b} className={cx("size-3 rounded-[3px]", b)} />)}
         mais

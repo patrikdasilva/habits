@@ -3,7 +3,8 @@ import Link from "next/link";
 import { addDays, today as getToday, startOfWeek } from "@/lib/date";
 import { listCategories } from "@/lib/repo/categories";
 import { getStats } from "@/lib/repo/stats";
-import { CategoryBadge, Card, cx, EmptyState, PageHeader, ProgressBar, SectionTitle } from "@/components/ui";
+import { cx } from "@/lib/cx";
+import { CategoryBadge, Card, EmptyState, PageHeader, ProgressBar, SectionTitle } from "@/components/ui";
 import { Heatmap } from "@/components/Heatmap";
 import { ProgressRing } from "@/components/ProgressRing";
 
@@ -69,7 +70,7 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
 
           <section>
             <SectionTitle>Dia a dia</SectionTitle>
-            <Card><Heatmap cells={heat} /></Card>
+            <Card><Heatmap cells={heat} maxCell={44} /></Card>
           </section>
 
           <div className="grid gap-7 lg:grid-cols-2 lg:items-start">

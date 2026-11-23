@@ -9,7 +9,8 @@ import type { Category, TaskView } from "@/lib/types";
 import { useCreate } from "./Create";
 import { useUI } from "./Providers";
 import { TaskItem } from "./TaskItem";
-import { Button, cx, EmptyState, PageHeader, SectionTitle } from "./ui";
+import { Button, EmptyState, PageHeader, SectionTitle } from "./ui";
+import { cx } from "@/lib/cx";
 
 export type TaskTab = "hoje" | "proximas" | "caixa" | "recorrentes" | "concluidas";
 type Completed = TaskView & { completedOn: string };
@@ -100,7 +101,7 @@ export function TasksView({
     ) : (
       <div className="grid gap-2 lg:grid-cols-2">
         {recurring.map((t) => (
-          <TaskItem key={t.id} task={t} category={catMap.get(t.category_id ?? -1)} hideCheck subtitle={recurrenceLabel(t)} />
+          <TaskItem key={t.id} task={{ ...t, done: false }} category={catMap.get(t.category_id ?? -1)} hideCheck subtitle={recurrenceLabel(t)} />
         ))}
       </div>
     );

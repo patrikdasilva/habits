@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { addDays, dayOfMonth, startOfWeek, weekdayShort } from "@/lib/date";
-import { cx } from "./ui";
+import { cx } from "@/lib/cx";
 
 const href = (d: string, today: string) => (d === today ? "/" : `/?d=${d}`);
 

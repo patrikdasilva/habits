@@ -1,7 +1,8 @@
 "use client";
 import { Ban } from "lucide-react";
 import { CategoryIcon, ICON_NAMES } from "./icons";
-import { Chip, cx } from "./ui";
+import { Chip } from "./ui";
+import { cx } from "@/lib/cx";
 import type { Category } from "@/lib/types";
 
 const DAY_LETTERS = ["D", "S", "T", "Q", "Q", "S", "S"];

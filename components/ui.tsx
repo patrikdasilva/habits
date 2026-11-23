@@ -1,10 +1,10 @@
 "use client";
 import { Check, Loader2 } from "lucide-react";
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import { cx } from "@/lib/cx";
 import { CategoryIcon } from "./icons";
 import type { Category } from "@/lib/types";
 
-export const cx = (...a: (string | false | null | undefined)[]) => a.filter(Boolean).join(" ");
 
 type BtnProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: "primary" | "secondary" | "ghost" | "danger";

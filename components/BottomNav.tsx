@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cx } from "./ui";
+import { cx } from "@/lib/cx";
 import { NAV } from "./nav";
 
 export function BottomNav() {
